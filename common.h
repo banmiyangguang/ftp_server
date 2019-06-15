@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pwd.h>
 
 #include <stdlib.h>
 #include <stdio.h>

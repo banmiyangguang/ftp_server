@@ -44,7 +44,7 @@ int tcp_server(const char *host, unsigned short port)
 		ERR_EXIT("listen");
 	}
 	
-	return 0;
+	return listenfd;
 }
 
 int getlocalip(char *ip)
@@ -85,16 +85,74 @@ void activate_nonblock(int fd)
  */
 void deactivate_nonblock(int fd)
 {
-
+	int ret;
+	int flags = fcntl(fd, F_GETFL);
+	if (flags == -1)
+		ERR_EXIT("fcntl");
+	
+	flags &= ~O_NONBLOCK;
+	ret = fcntl(fd, F_SETFL, flags);
+	if (ret == -1)
+		ERR_EXIT("fcntl");
 }
 
 int read_timeout(int fd, unsigned int wait_seconds)
 {
-	return 0;
+	int ret = 0;
+	if (wait_seconds > 0)
+	{
+		fd_set read_fdset;
+		struct timeval timeout;
+
+		FD_ZERO(&read_fdset);
+		FD_SET(fd, &read_fdset);
+
+		timeout.tv_sec = wait_seconds;
+		timeout.tv_usec = 0;
+		do {
+			ret = select(fd + 1, &read_fdset, NULL, NULL, &timeout);
+		} while (ret < 0 && errno == EINTR);
+
+		if (ret == 0)
+		{
+			ret = -1;
+			errno = ETIMEDOUT;
+		}
+		else if (ret == -1)
+			ret = 0;
+	}
+
+	return ret;
 }
+
 int write_timeout(int fd, unsigned int wait_seconds)
 {
-	return 0;
+	
+	int ret = 0;
+	if (wait_seconds > 0)
+	{
+		fd_set write_fdset;
+		struct timeval timeout;
+
+		FD_ZERO(&write_fdset);
+		FD_SET(fd, &write_fdset);
+
+		timeout.tv_sec = wait_seconds;
+		timeout.tv_usec = 0;
+		do {
+			ret = select(fd + 1, &write_fdset, NULL, NULL, &timeout);
+		} while (ret < 0 && errno == EINTR);
+
+		if (ret == 0)
+		{
+			ret = -1;
+			errno = ETIMEDOUT;
+		}
+		else if (ret == -1)
+			ret = 0;
+	}
+
+	return ret;
 }
 int accept_timeout(int fd, struct sockaddr_in *addr, unsigned int wait_seconds)
 {
