@@ -21,7 +21,9 @@ void handle_child(session_t *sess)
 		//clear \r\n
 		str_trim_crlf(sess->cmdline);
 		//parse ftp command and args
-
+		str_split(sess->cmdline, sess->cmd, sess->arg, ' ');	
+		//switch cmd to upper
+		str_upper(sess->cmd);
 		//process ftp command
 
 	}
